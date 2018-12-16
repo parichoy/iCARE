@@ -1,0 +1,102 @@
+%\VignetteIndexEntry{iCARE Vignette}
+%\VignettePackage{iCARE}
+%\VigetteDepends{iCARE}
+
+\documentclass[a4paper]{article}
+\begin{document}
+
+\title{iCARE(Individualized Coherent Absolute Risk Estimators) Package}
+\maketitle
+
+<<start>>=
+library(iCARE)
+@
+
+\section*{Example 1.A}
+
+Load the breast cancer data.
+<<load-data>>=
+data("bc_data", package="iCARE")
+@
+
+In this example, we will estimate the risk of breast cancer in ages 50-80.
+A SNP-only model is fit, with no specific genotypes supplied for estimation.
+The population disease rates are from SEER.
+<<model-1a>>=
+res_snps_miss = computeAbsoluteRisk(model.snp.info = bc_72_snps, 
+                      model.disease.incidence.rates = bc_inc,
+                      model.competing.incidence.rates = mort_inc, 
+                      apply.age.start = 50, 
+                      apply.age.interval.length = 30,
+                      return.refs.risk=TRUE)
+@
+
+Compute a summary of the risks and visualize the results
+<<summary-1a, fig=TRUE>>=
+summary(res_snps_miss$risk)
+summary(res_snps_miss$refs.risk)
+plot(density(res_snps_miss$risk), lwd=2, 
+  main="SNP-only Risk Stratification: Ages 50-80", 
+  xlab="Absolute Risk of Breast Cancer")
+@
+
+\section*{Example 1.B}
+
+In this example, we will again estimate the risk of breast cancer in ages 50-80.
+This time however, three specific genotypes are supplied for estimation (with some missing data).
+The argument return.refs.risk = TRUE, includes the referent dataset risks be included in results.
+<<model 1b>>=
+res_snps_dat = computeAbsoluteRisk(model.snp.info = bc_72_snps, 
+                                model.disease.incidence.rates = bc_inc,
+                                model.competing.incidence.rates = mort_inc, 
+                                apply.age.start = 50, 
+                                apply.age.interval.length = 30, 
+                                apply.snp.profile = new_snp_prof, 
+                                return.refs.risk = TRUE)
+names(res_snps_dat)
+@
+
+Visualize the Results
+<<plot-1b, fig=TRUE>>=
+plot(density(res_snps_dat$refs.risk), lwd=2, 
+   main="Referent SNP-only Risk Distribution: Ages 50-80",
+   xlab="Absolute Risk of Breast Cancer")
+abline(v=res_snps_dat$risk, col="red")
+legend("topright", legend="New Profiles", col="red", lwd=1)
+@
+
+\section*{Example 2}
+
+In this example, we will estimate the risk of breast cancer in ages 50-80 by
+fitting a model with 13 risk factors and 72 SNPs.
+
+
+<<fit-2>>=
+res_covs_snps = computeAbsoluteRisk(model.formula=bc_model_formula, 
+                                         model.cov.info=bc_model_cov_info,
+                                         model.snp.info=bc_72_snps,
+                                         model.log.RR=bc_model_log_or,
+                                         model.ref.dataset=ref_cov_dat,
+                                         model.disease.incidence.rates=bc_inc,
+                                         model.competing.incidence.rates=mort_inc, 
+                                         model.bin.fh.name="famhist",
+                                         apply.age.start=50, 
+                                         apply.age.interval.length=30,
+                                         apply.cov.profile=new_cov_prof,
+                                         apply.snp.profile=new_snp_prof, 
+                                         return.refs.risk=TRUE)
+@
+
+Display details of the fit
+<<fit-2>>=
+print(res_covs_snps$details)
+@
+
+\section*{Session Information}
+<<sessionInfo>>=
+sessionInfo()
+@ 
+
+\end{document}
+
+
